@@ -54,10 +54,10 @@ class FormulaInterpreter {
 			}
 		}
 		if(preg_match($this->basicMathOperationsSinglePattern, $this->formula)){
-			return $this->execute($this->formula, $parameters, $precision);
+			return $this->execute($this->formula, $this->parameters, $this->precision);
 		}
 		if($this->precision>0) {
-			return number_format($this->formula, $precision);
+			return number_format((float)$this->formula, $this->precision);
 		}
 		return $this->formula;
 	}
