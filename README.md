@@ -44,7 +44,7 @@ echo $cicleArea;
 
 # About the formulas
 
-1.  It must contain two operands and an operator.
+1.  It must contain at least two operands and an operator.
 2.  Operands' name could be in upper or lower case.
 3.  By now, math functions as sin, cos, pow… are not included. I'm working to include them.
 4.  If your formula is not valid, you will get an error message like: **Error, your formula (single_variable) is not valid.**
