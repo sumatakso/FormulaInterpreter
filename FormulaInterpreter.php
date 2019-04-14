@@ -6,22 +6,27 @@ class FormulaInterpreter {
 	private $basicMathOperationPatterns;
 	private $basicMathOperationsSinglePattern;
 	private $precision;
+	private $numberBetweenParentesis;
+	private $debug;
 
-	public function __construct($formula, $parameters, $precision=0) {
+	public function __construct($formula, $parameters, $precision=0, $debug=false) {
 		$this->formula = strtolower($formula);
 		$this->parameters = $parameters;
+		$this->debug = $debug;
 		$this->basicMathOperationPatterns  = [
-			"sum" => "/\s*\({0,1}\s*([a-z|0-9\.{0,1}]+_{0,})+\s*(\+\s*([a-z|0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/", #sum
-			"subtraction" => "/\s*\({0,1}\s*([a-z|0-9\.{0,1}]+_{0,})+\s*(\-\s*([a-z|0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/", #subtraction
-			"division" => "/\s*\({0,1}\s*([a-z|0-9\.{0,1}]+_{0,})+\s*(\/\s*([a-z|0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/", #division
-			"multiplication" => "/\s*\({0,1}\s*([a-z|0-9\.{0,1}]+_{0,})+\s*(\*\s*([a-z|0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/", #multiplication
+			"division" => "/\s*\({0,1}\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+\s*(\/\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/",
+			"multiplication" => "/\s*\({0,1}\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+\s*(\*\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/",
+			"sum" => "/\s*\({0,1}\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+\s*(\+\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/",
+			"subtraction" => "/\s*\({0,1}\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+\s*(\-\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/",
+			"number_between_parentesis" => "/\s*\(\s*[\-{0,1}0-9]+\s*\)\s*/",
 		];
 		#sum, subtraction, division & multiplication in a single pattern
-		$this->basicMathOperationsSinglePattern = "/\s*\({0,1}\s*([a-z|0-9\.{0,1}]+_{0,})+\s*([\+|\-|\*|\/]\s*([a-z|0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/";
+		$this->basicMathOperationsSinglePattern = "/\s*\({0,1}\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+\s*([\+|\-|\*|\/]\s*([\-{0,1}a-z|\-{0,1}0-9\.{0,1}]+_{0,})+)+\s*\){0,1}\s*/";
+		$this->numberBetweenParentesis = "/\s*\(\s*[\-{0,1}0-9]+\s*\)\s*/";
 		$this->precision = $precision;
 	}
 
-	public function execute($debug=false) {
+	public function execute() {
 		if(!preg_match($this->basicMathOperationsSinglePattern, $this->formula)){
 			return '<pre style="color:red">Error, your formula (<strong>'.$this->formula.'</strong>) is not valid.</pre>';
 		}
@@ -34,26 +39,31 @@ class FormulaInterpreter {
 				case 'sum':
 					preg_match_all($pattern, $this->formula, $matches);
 					if(!isset($matches[0])) { break; }
-					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '+', $debug);
+					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '+', $this->debug);
 					break;
 				case 'subtraction':
 					preg_match_all($pattern, $this->formula, $matches);
 					if(!isset($matches[0])) { break; }
-					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '-', $debug);
+					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '-', $this->debug);
 					break;
 				case 'multiplication':
 					preg_match_all($pattern, $this->formula, $matches);
 					if(!isset($matches[0])) { break; }
-					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '*', $debug);
+					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '*', $this->debug);
 					break;
 				case 'division':
 					preg_match_all($pattern, $this->formula, $matches);
 					if(!isset($matches[0])) { break; }
-					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '/', $debug);
+					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '/', $this->debug);
+					break;
+				case 'number_between_parentesis':
+					preg_match_all($pattern, $this->formula, $matches);
+					if(!isset($matches[0])) { break; }
+					$this->formula = $this->operationByOperation($matches[0], $pattern, $this->parameters, $this->formula, '()', $this->debug);
 					break;
 			}
 		}
-		if(preg_match($this->basicMathOperationsSinglePattern, $this->formula)){
+		if(preg_match($this->basicMathOperationsSinglePattern, $this->formula) || preg_match($this->numberBetweenParentesis, $this->formula)){
 			return $this->execute($this->formula, $this->parameters, $this->precision);
 		}
 		if($this->precision>0) {
@@ -66,8 +76,14 @@ class FormulaInterpreter {
 	private function basicOperation($op1, $op2, $operator) {
 		switch ($operator) {
 			case '+':
+				if($op1==0 && $op2>0){
+					return $op2;
+				}
 				return $op1+$op2;
 			case '-':
+				if($op1==0 && $op2>0){
+					return $op2;
+				}
 				return $op1-$op2;
 			case '*':
 				return $op1*$op2;
@@ -79,40 +95,54 @@ class FormulaInterpreter {
 
 	private function operationByOperation($matches, $pattern, $parameters, $formula, $operator='+', $debug=false) {
 		$parameters = $this->parametersIndexInLowercase($parameters);
-
 		for ($i=count($matches); $i >= 0; $i--) { 
 			preg_match_all($pattern, $formula, $innerMatches);
-			if(isset($innerMatches[0]) && isset($innerMatches[0][$i])) {
+			#self::pr($innerMatches[0]);
+			if(isset($innerMatches[0]) && !empty($innerMatches[0]) && isset($innerMatches[0][$i])) {
+				#$this::pr('FORMULA:');
+				#$this::pr($formula);
+
+				#$this::pr($innerMatches[0]);
 				$expression = $innerMatches[0][$i];
 				$expressionToBeReplaced = $expression;
 				$expression = str_replace('(', '', $expression);
 				$expression = str_replace(')', '', $expression);
 				$expression = explode($operator, $expression);
-				
+				#echo "expression";$this::pr($expression);
+
 				$result = 0.0;
 				if(in_array($operator, ['*', '/'])) {
 					$result = 1;
 				}
+				#echo "operator";$this::pr($operator);
 				for ($k=0; $k < count($expression); $k++) { 
 					if(is_numeric($expression[$k])) {
 						$result = $this->basicOperation($result, (float) $expression[$k], $operator);
 					}else if(is_string($expression[$k])){
-						$result = $this->basicOperation($result, $parameters[$expression[$k]], $operator);
+						#echo "::";$this::pr($expression[$k]);echo '::';
+						$paramKey = preg_replace('/\W/', '', $expression[$k]); //to get only the parameter's letters
+						$paramKeyValue = $parameters[$paramKey];
+						if(preg_match('/[-]/', $expression[$k])){ //si el parametro es -
+							$paramKeyValue = ($parameters[$paramKey]*-1);
+						}
+						$result = $this->basicOperation($result, $paramKeyValue, $operator);
 					}
+				}
+				if($operator!=='()'){
+					$expressionToBeReplaced = str_replace('(', '', $expressionToBeReplaced);
+					$expressionToBeReplaced = str_replace(')', '', $expressionToBeReplaced);
+				}else{
+					$result = $expression[0];
 				}
 				$formula = str_replace($expressionToBeReplaced, $result, $formula); # reduced formula
 				if($debug){
-					echo '<pre>';
-					print_r($expression);
-					echo '<br>';
-					echo $formula;
-					echo '</pre>';
+					self::pr('E: '.$expressionToBeReplaced);
+					self::pr('R: '.$result);
+					self::pr('F: '.$formula);
 				}
 			}
 		}
-		if(preg_match($pattern, $formula)){
-			return $this->operationByOperation($matches, $pattern, $parameters, $formula, $operator, $debug=false);
-		}
+
 		return $formula;
 	}
 
@@ -132,5 +162,14 @@ class FormulaInterpreter {
 			}
 		}
 		return $allParametersValuesAreNumeric;
+	}
+
+	public static function pr($data=null, $tag=null) {
+		echo '<pre>';
+		if($tag!=null){
+			echo $tag.'<br/>';
+		}
+		print_r($data);
+		echo '</pre>';
 	}
 }

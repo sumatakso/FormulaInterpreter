@@ -42,6 +42,11 @@ echo $cicleArea;
 
 ```
 
+# Complexity of the expressions. "radio" is a variable (hypotheticals cases)
+1. radio*-radio+(10+5*(10-10+(2/2)))
+2. -100+(15*(10-10+(1)))
+3. (radio*1+(0+0+(-1*0)))*-radio+(10+5*(10-10+(2/2)))
+
 # About the formulas
 
 1.  It must contain at least two operands and an operator.
