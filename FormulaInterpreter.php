@@ -72,7 +72,6 @@ class FormulaInterpreter {
 		return $this->formula;
 	}
 
-
 	private function basicOperation($op1, $op2, $operator) {
 		switch ($operator) {
 			case '+':
@@ -97,32 +96,23 @@ class FormulaInterpreter {
 		$parameters = $this->parametersIndexInLowercase($parameters);
 		for ($i=count($matches); $i >= 0; $i--) { 
 			preg_match_all($pattern, $formula, $innerMatches);
-			#self::pr($innerMatches[0]);
 			if(isset($innerMatches[0]) && !empty($innerMatches[0]) && isset($innerMatches[0][$i])) {
-				#$this::pr('FORMULA:');
-				#$this::pr($formula);
-
-				#$this::pr($innerMatches[0]);
 				$expression = $innerMatches[0][$i];
 				$expressionToBeReplaced = $expression;
 				$expression = str_replace('(', '', $expression);
 				$expression = str_replace(')', '', $expression);
 				$expression = explode($operator, $expression);
-				#echo "expression";$this::pr($expression);
-
 				$result = 0.0;
 				if(in_array($operator, ['*', '/'])) {
 					$result = 1;
 				}
-				#echo "operator";$this::pr($operator);
 				for ($k=0; $k < count($expression); $k++) { 
 					if(is_numeric($expression[$k])) {
 						$result = $this->basicOperation($result, (float) $expression[$k], $operator);
 					}else if(is_string($expression[$k])){
-						#echo "::";$this::pr($expression[$k]);echo '::';
 						$paramKey = preg_replace('/\W/', '', $expression[$k]); //to get only the parameter's letters
 						$paramKeyValue = $parameters[$paramKey];
-						if(preg_match('/[-]/', $expression[$k])){ //si el parametro es -
+						if(preg_match('/[-]/', $expression[$k])){ //if parameter is -
 							$paramKeyValue = ($parameters[$paramKey]*-1);
 						}
 						$result = $this->basicOperation($result, $paramKeyValue, $operator);
